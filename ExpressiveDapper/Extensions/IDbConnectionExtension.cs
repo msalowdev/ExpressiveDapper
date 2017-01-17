@@ -11,17 +11,17 @@ namespace ExpressiveDapper.Extensions
 {
     public static class IDbConnectionExtension
     {
-        public static void Insert<TTable>(this IDbConnection con, TTable objectToInsert) where TTable : ITable
+        public static void Insert<TTable>(this IDbConnection con, TTable objectToInsert, IDbTransaction transaction) where TTable : ITable
         {
             SqlStatement statement = SqlGenerator.GenerateInsertStatement(objectToInsert);
 
-            con.Execute(statement.Statement, statement.Parameters);
+            con.Execute(statement.Statement, statement.Parameters, transaction);
         }
-        public static void Update<TTable>(this IDbConnection con, TTable objectToUpdate, Expression<Func<TTable, bool>> where ) where TTable: ITable
+        public static void Update<TTable>(this IDbConnection con, TTable objectToUpdate, Expression<Func<TTable, bool>> where, IDbTransaction transaction) where TTable: ITable
         {
             SqlStatement statement = SqlGenerator.GenerateUpdateStatement<TTable>(objectToUpdate, where);
 
-            con.Execute(statement.Statement, statement.Parameters);
+            con.Execute(statement.Statement, statement.Parameters, transaction);
         }
 
         public static void Update<TTable>(this IDbConnection con, TTable objectToUpdate)
@@ -29,18 +29,18 @@ namespace ExpressiveDapper.Extensions
             throw new NotImplementedException();
         }
 
-        public static void Update<TTable>(this IDbConnection con, dynamic objectToUpdate, Expression<Func<TTable, bool>> where) where TTable : ITable
+        public static void Update<TTable>(this IDbConnection con, dynamic objectToUpdate, Expression<Func<TTable, bool>> where, IDbTransaction transaction) where TTable : ITable
         {
             SqlStatement statement = SqlGenerator.GenerateUpdateStatement<TTable>(objectToUpdate, where);
 
-            con.Execute(statement.Statement, statement.Parameters);
+            con.Execute(statement.Statement, statement.Parameters, transaction);
         }
 
-        public static void Delete<TTable>(this IDbConnection con, Expression<Func<TTable, bool>> where) where TTable: ITable
+        public static void Delete<TTable>(this IDbConnection con, Expression<Func<TTable, bool>> where, IDbTransaction transaction) where TTable: ITable
         {
             SqlStatement statement = SqlGenerator.GenerateDeleteStatement<TTable>(where);
 
-            con.Execute(statement.Statement, statement.Parameters);
+            con.Execute(statement.Statement, statement.Parameters, transaction);
         }
 
 

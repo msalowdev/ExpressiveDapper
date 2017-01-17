@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq.Expressions;
-using Dapper;
 using ExpressiveDapper.Expressions;
 using ExpressiveDapper.Interfaces;
 using ExpressiveDapper.Extensions;

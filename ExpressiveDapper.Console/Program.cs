@@ -40,14 +40,19 @@ namespace ExpressiveDapper.Console
 
             try
             {
+
                 using (var con = BuildConnection())
                 {
-                    con.Delete<TestTable>(i => i.Id == 6);
+                    using (var trans = con.BeginTransaction())
+                    {
+                        con.Delete<TestTable>(i => i.Id == 6, trans);
 
-                    var result =
-                    con.Get<TestTable>(i => i.Field1 == "Hello2");
-                    System.Console.WriteLine(result.Count);
-                    System.Console.ReadLine();
+                        var result =
+                        con.Get<TestTable>(i => i.Field1 == "Hello2");
+                        System.Console.WriteLine(result.Count);
+                        System.Console.ReadLine();
+                        trans.Commit();
+                    }
                 }
 
             }
