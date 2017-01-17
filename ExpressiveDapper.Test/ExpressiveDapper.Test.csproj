@@ -60,7 +60,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\FunctionalDapper\ExpressiveDapper.csproj">
+    <ProjectReference Include="..\ExpressiveDapper\ExpressiveDapper.csproj">
       <Project>{1298ed84-656c-4731-8349-459f48140c75}</Project>
       <Name>ExpressiveDapper</Name>
     </ProjectReference>
