@@ -48,7 +48,7 @@ namespace ExpressiveDapper.Console
                         con.Delete<TestTable>(i => i.Id == 6, trans);
 
                         var result =
-                        con.Get<TestTable>(i => i.Field1 == "Hello2");
+                        con.Get<TestTable>(i => i.Field1 == "Hello2", trans);
                         System.Console.WriteLine(result.Count);
                         System.Console.ReadLine();
                         trans.Commit();
