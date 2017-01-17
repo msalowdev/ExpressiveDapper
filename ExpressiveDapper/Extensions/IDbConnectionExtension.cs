@@ -23,12 +23,6 @@ namespace ExpressiveDapper.Extensions
 
             con.Execute(statement.Statement, statement.Parameters, transaction);
         }
-
-        public static void Update<TTable>(this IDbConnection con, TTable objectToUpdate)
-        {
-            throw new NotImplementedException();
-        }
-
         public static void Update<TTable>(this IDbConnection con, dynamic objectToUpdate, Expression<Func<TTable, bool>> where, IDbTransaction transaction) where TTable : ITable
         {
             SqlStatement statement = SqlGenerator.GenerateUpdateStatement<TTable>(objectToUpdate, where);
@@ -44,11 +38,11 @@ namespace ExpressiveDapper.Extensions
         }
 
 
-        public static List<TTable> Get<TTable>(this IDbConnection con, Expression<Func<TTable, bool>> where) where TTable: ITable
+        public static List<TTable> Get<TTable>(this IDbConnection con, Expression<Func<TTable, bool>> where, IDbTransaction transaction) where TTable: ITable
         {
             SqlStatement statement = SqlGenerator.GenerateSelectStatement<TTable>(where);
 
-            return con.Query<TTable>(statement.Statement, statement.Parameters).ToList();
+            return con.Query<TTable>(statement.Statement, statement.Parameters, transaction).ToList();
         }
 
     
