@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
@@ -7,67 +8,85 @@ using System.Threading.Tasks;
 using ExpressiveDapper.Extensions;
 using ExpressiveDapper.Interfaces;
 using ExpressiveDapper.SqlGeneration;
+using ExpressiveDapper.TableAttribute;
 
 namespace ExpressiveDapper.Console
 {
     class Program
     {
 
-        public class Perosn : ITable
+        public class Books : ITable
         {
-            public int Id { get; set; }
+            [PrimaryKey]
+            public int BookId { get; set; }
+            public string BookName { get; set; }
+            public DateTime PublishDate { get; set; }
+            public int Count { get; set; }
         }
 
-        public class TestTable : ITable
+        public class Library: ITable
         {
             public int Id { get; set; }
-            public string Field1 { get; set; }
-            public DateTime Field2 { get; set; }
-            public int? Field3 { get; set; }
+            public int PeopleWorkingHere { get; set; }
+            public int BookId { get; set; }
+            public string LibraryName { get; set; }
         }
+
+        //public class Perosn : ITable
+        //{
+        //    public int Id { get; set; }
+        //}
+
+        //public class TestTable : ITable
+        //{
+        //    public int Id { get; set; }
+        //    public string Field1 { get; set; }
+        //    public DateTime Field2 { get; set; }
+        //    public int? Field3 { get; set; }
+        //}
 
         static void Main(string[] args)
         {
 
-            var newTestTable = new TestTable()
+            var newBook = new Books()
             {
-                Id = 1,
-                Field1 = "Hello2",
-                Field2 = new DateTime(2012, 1, 1),
-                Field3 = 12
+                BookId = 15,
+                BookName = "Updated Book again",
+                Count = 12,
+                PublishDate = DateTime.Now
             };
 
-
-            try
+            using (var con = BuildConnection())
             {
+                con.Open();
 
-                using (var con = BuildConnection())
+                using (var trans = con.BeginTransaction(IsolationLevel.Serializable))
                 {
-                    using (var trans = con.BeginTransaction())
+                    try
                     {
-                        con.Delete<TestTable>(i => i.Id == 6, trans);
+                        //con.Insert(newBook, trans);
 
-                        var result =
-                        con.Get<TestTable>(i => i.Field1 == "Hello2");
-                        System.Console.WriteLine(result.Count);
-                        System.Console.ReadLine();
+                        con.Update(newBook, i => i.BookId == newBook.BookId, trans);
+
+                        var retreivedBook =
+                        con.Get<Books>(i => i.BookId == newBook.BookId, trans).FirstOrDefault();
+                        System.Console.WriteLine(retreivedBook);
                         trans.Commit();
                     }
+                    catch (Exception ex)
+                    {
+
+                        System.Console.WriteLine(ex.Message);
+                        trans.Rollback();
+                    }      
                 }
-
             }
-            catch (Exception ex)
-            {
-                System.Console.WriteLine(ex.Message);
-                System.Console.ReadLine();
-            }
-
 
         }
 
         private static SqlConnection BuildConnection()
         {
-            return new SqlConnection("Data Source=swisql300;Initial Catalog=DapperTest;Integrated Security=True");
+            return new SqlConnection("Data Source=<DBName>;Initial Catalog=DapperTest;Integrated Security=True");
         }
     }
 }
