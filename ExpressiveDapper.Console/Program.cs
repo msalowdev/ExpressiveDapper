@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
@@ -7,23 +8,28 @@ using System.Threading.Tasks;
 using ExpressiveDapper.Extensions;
 using ExpressiveDapper.Interfaces;
 using ExpressiveDapper.SqlGeneration;
+using ExpressiveDapper.TableAttribute;
 
 namespace ExpressiveDapper.Console
 {
     class Program
     {
 
-        public class Perosn : ITable
+        public class Books : ITable
         {
-            public int Id { get; set; }
+            [PrimaryKey]
+            public int BookId { get; set; }
+            public string BookName { get; set; }
+            public DateTime PublishDate { get; set; }
+            public int Count { get; set; }
         }
 
-        public class TestTable : ITable
+        public class Library: ITable
         {
             public int Id { get; set; }
-            public string Field1 { get; set; }
-            public DateTime Field2 { get; set; }
-            public int? Field3 { get; set; }
+            public int PeopleWorkingHere { get; set; }
+            public int BookId { get; set; }
+            public string LibraryName { get; set; }
         }
 
         public class PolicyTerm : ITable
@@ -42,19 +48,19 @@ namespace ExpressiveDapper.Console
         static void Main(string[] args)
         {
 
-            var newTestTable = new TestTable()
+            var newBook = new Books()
             {
-                Id = 1,
-                Field1 = "Hello2",
-                Field2 = new DateTime(2012, 1, 1),
-                Field3 = 12
+                BookId = 15,
+                BookName = "Updated Book again",
+                Count = 12,
+                PublishDate = DateTime.Now
             };
 
-
-            try
+            using (var con = BuildConnection())
             {
+                con.Open();
 
-                using (var con = BuildConnection())
+                using (var trans = con.BeginTransaction(IsolationLevel.Serializable))
                 {
                     con.Open();
                     using (var trans = con.BeginTransaction())
@@ -66,21 +72,20 @@ namespace ExpressiveDapper.Console
                         System.Console.ReadLine();
                         trans.Commit();
                     }
+                    catch (Exception ex)
+                    {
+
+                        System.Console.WriteLine(ex.Message);
+                        trans.Rollback();
+                    }      
                 }
-
             }
-            catch (Exception ex)
-            {
-                System.Console.WriteLine(ex.Message);
-                System.Console.ReadLine();
-            }
-
 
         }
 
         private static SqlConnection BuildConnection()
         {
-            return new SqlConnection("Data Source=192.168.1.24,2137;Initial Catalog=SWIBilling;User Id=dbtestuser; Password=dbtest");
+            return new SqlConnection("Data Source=<DBName>;Initial Catalog=DapperTest;Integrated Security=True");
         }
     }
 }
