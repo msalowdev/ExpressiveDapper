@@ -133,5 +133,26 @@ namespace ExpressiveDapper.Test.Expression
 
             Assert.AreEqual(result.SqlStatement, expectedResult);
         }
+        [TestMethod]
+        public void Given_An_Orm_Object_When_Comparing_Parameter_Int_Value_For_Not_Equal_Then_SQL_Valid_Not_Equal_Compare_With_Value_Of_Object_String_Returned()
+        {
+            //given
+            var person = new Person
+            {
+                CompanyId = 7,
+                FirstName = "Bilbo",
+                LastName = "Baggins",
+                Id = 10
+            };
+
+            ExpressionParser parser = new ExpressionParser();
+            //when
+            var result = parser.ParseCompareFunction<Person>(per => per.CompanyId != person.CompanyId);
+
+            //then
+            var expectedResult = $"[Person].[CompanyId] != @parm0";
+
+            Assert.AreEqual(result.SqlStatement, expectedResult);
+        }
     }
 }

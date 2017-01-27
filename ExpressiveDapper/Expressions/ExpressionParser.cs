@@ -60,7 +60,7 @@ namespace ExpressiveDapper.Expressions
             else if (expression is MemberExpression)
             {
                 var memberExpression = (MemberExpression) expression;
-                if (memberExpression.Expression.NodeType == ExpressionType.Parameter)
+                if ( memberExpression.Expression?.NodeType == ExpressionType.Parameter)
                 {
                     parsedExpression = ParseParameterExpression(tableName, memberExpression);
                 }

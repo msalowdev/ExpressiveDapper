@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ExpressiveDapper.Extensions
 {
@@ -34,6 +30,9 @@ namespace ExpressiveDapper.Extensions
                     break;
                 case ExpressionType.LessThanOrEqual:
                     sql = " <= ";
+                    break;
+                    case ExpressionType.NotEqual:
+                    sql = " != ";
                     break;
                 default:
                     throw new ArgumentException($"Could not parse expression type {expressionType}");

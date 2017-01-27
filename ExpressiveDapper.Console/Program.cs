@@ -26,6 +26,19 @@ namespace ExpressiveDapper.Console
             public int? Field3 { get; set; }
         }
 
+        public class PolicyTerm : ITable
+        {
+            public Guid Id { get; set; }
+            public string PolicyNumber { get; set; }
+            public DateTime EffectiveDate { get; set; }
+            public DateTime ExpirationDate { get; set; }
+            public decimal StateFeeRate { get; set; }
+            public decimal TaxRate { get; set; }
+            public int TermLength { get; set; }
+            public DateTime DateCreated { get; set; }
+            public DateTime DateModified { get; set; }
+        }
+
         static void Main(string[] args)
         {
 
@@ -43,12 +56,12 @@ namespace ExpressiveDapper.Console
 
                 using (var con = BuildConnection())
                 {
+                    con.Open();
                     using (var trans = con.BeginTransaction())
                     {
-                        con.Delete<TestTable>(i => i.Id == 6, trans);
 
                         var result =
-                        con.Get<TestTable>(i => i.Field1 == "Hello2", trans);
+                        con.Get<PolicyTerm>(i => i.Id != Guid.Empty, trans);
                         System.Console.WriteLine(result.Count);
                         System.Console.ReadLine();
                         trans.Commit();
@@ -67,7 +80,7 @@ namespace ExpressiveDapper.Console
 
         private static SqlConnection BuildConnection()
         {
-            return new SqlConnection("Data Source=swisql300;Initial Catalog=DapperTest;Integrated Security=True");
+            return new SqlConnection("Data Source=192.168.1.24,2137;Initial Catalog=SWIBilling;User Id=dbtestuser; Password=dbtest");
         }
     }
 }
