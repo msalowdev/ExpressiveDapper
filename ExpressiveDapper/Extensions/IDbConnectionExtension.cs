@@ -87,6 +87,12 @@ namespace ExpressiveDapper.Extensions
 
             return con.Query<TTable>(statement.Statement, statement.Parameters, transaction).ToList();
         }
+        public static List<TTable> Get<TTable>(this IDbConnection con, Expression<Func<TTable, bool>> where) where TTable : ITable
+        {
+            SqlStatement statement = SqlGenerator.GenerateSelectStatement<TTable>(where);
+
+            return con.Query<TTable>(statement.Statement, statement.Parameters).ToList();
+        }
         public static List<TTable> Get<TTable>(this IDbConnection con, IDbTransaction transaction) where TTable : ITable
         {
             SqlStatement statement = SqlGenerator.GenerateSelectStatement<TTable>(null);
