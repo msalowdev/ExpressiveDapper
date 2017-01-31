@@ -14,7 +14,6 @@ namespace ExpressiveDapper.Console
 {
     class Program
     {
-
         public class Books : ITable
         {
             [PrimaryKey]
@@ -32,19 +31,6 @@ namespace ExpressiveDapper.Console
             public string LibraryName { get; set; }
         }
 
-        public class PolicyTerm : ITable
-        {
-            public Guid Id { get; set; }
-            public string PolicyNumber { get; set; }
-            public DateTime EffectiveDate { get; set; }
-            public DateTime ExpirationDate { get; set; }
-            public decimal StateFeeRate { get; set; }
-            public decimal TaxRate { get; set; }
-            public int TermLength { get; set; }
-            public DateTime DateCreated { get; set; }
-            public DateTime DateModified { get; set; }
-        }
-
         static void Main(string[] args)
         {
 
@@ -56,18 +42,11 @@ namespace ExpressiveDapper.Console
                 PublishDate = DateTime.Now
             };
 
-            using (var con = BuildConnection())
-            {
-                con.Open();
-                var things = con.Get<PolicyTerm>();
-                System.Console.WriteLine(things.Count);
-            }
-
         }
 
         private static SqlConnection BuildConnection()
         {
-            return new SqlConnection("Data Source=192.168.1.24,2137;Initial Catalog=SWIBilling;User Id=dbtestuser; Password=dbtest");
+            return new SqlConnection("Data Source=<Server>;Initial Catalog=<DB>;");
         }
     }
 }
