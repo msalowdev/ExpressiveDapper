@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq.Expressions;
+using System.Security.AccessControl;
 using ExpressiveDapper.Expressions;
 using ExpressiveDapper.Interfaces;
 using ExpressiveDapper.Extensions;
@@ -17,11 +18,15 @@ namespace ExpressiveDapper.SqlGeneration
             SqlStatement sqlStatement = new SqlStatement();
 
             var selectParms = TypeParser.BuildSqlForSelect( tableType);
+            SqlParsedExpression parsedWhereExpression = null;
+            if (where != null)
+            {
+                parsedWhereExpression = parser.ParseCompareFunction(where);
+            }
+           
 
-            var parsedWhereExpression = parser.ParseCompareFunction(where);
-
-            sqlStatement.Statement = $"select {selectParms} from {tableType.GetName()} {(string.IsNullOrEmpty(parsedWhereExpression.SqlStatement) ? string.Empty : " where " + parsedWhereExpression.SqlStatement)}";
-            sqlStatement.Parameters = parsedWhereExpression.Parameters.ToDynamicParameters();
+            sqlStatement.Statement = $"select {selectParms} from {tableType.GetName()} {(string.IsNullOrEmpty(parsedWhereExpression?.SqlStatement) ? string.Empty : " where " + parsedWhereExpression.SqlStatement)}";
+            sqlStatement.Parameters = parsedWhereExpression?.Parameters.ToDynamicParameters();
             return sqlStatement;
         }
 

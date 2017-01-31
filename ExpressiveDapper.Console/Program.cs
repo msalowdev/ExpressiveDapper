@@ -59,33 +59,15 @@ namespace ExpressiveDapper.Console
             using (var con = BuildConnection())
             {
                 con.Open();
-
-                using (var trans = con.BeginTransaction(IsolationLevel.Serializable))
-                {
-                    con.Open();
-                    using (var trans = con.BeginTransaction())
-                    {
-
-                        var result =
-                        con.Get<PolicyTerm>(i => i.Id != Guid.Empty, trans);
-                        System.Console.WriteLine(result.Count);
-                        System.Console.ReadLine();
-                        trans.Commit();
-                    }
-                    catch (Exception ex)
-                    {
-
-                        System.Console.WriteLine(ex.Message);
-                        trans.Rollback();
-                    }      
-                }
+                var things = con.Get<PolicyTerm>();
+                System.Console.WriteLine(things.Count);
             }
 
         }
 
         private static SqlConnection BuildConnection()
         {
-            return new SqlConnection("Data Source=<DBName>;Initial Catalog=DapperTest;Integrated Security=True");
+            return new SqlConnection("Data Source=192.168.1.24,2137;Initial Catalog=SWIBilling;User Id=dbtestuser; Password=dbtest");
         }
     }
 }

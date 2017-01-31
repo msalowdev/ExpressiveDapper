@@ -31,19 +31,4 @@ Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 4
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = https://badgerstudio.visualstudio.com/
-		SccProjectUniqueName0 = ExpressiveDapper\\ExpressiveDapper.csproj
-		SccProjectName0 = ExpressiveDapper
-		SccLocalPath0 = ExpressiveDapper
-		SccLocalPath1 = .
-		SccProjectUniqueName2 = ExpressiveDapper.Console\\ExpressiveDapper.Console.csproj
-		SccProjectName2 = ExpressiveDapper.Console
-		SccLocalPath2 = ExpressiveDapper.Console
-		SccProjectUniqueName3 = FExpressiveDapper.Test\\ExpressiveDapper.Test.csproj
-		SccProjectName3 = ExpressiveDapper.Test
-		SccLocalPath3 = ExpressiveDapper.Test
-	EndGlobalSection
 EndGlobal
