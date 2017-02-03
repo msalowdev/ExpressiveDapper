@@ -1,11 +1,12 @@
 ﻿using System;
+using System.Diagnostics.Eventing.Reader;
 using System.Linq.Expressions;
 
 namespace ExpressiveDapper.Extensions
 {
     public static class NodeTypeExtension
     {
-        public static string GetSql(this ExpressionType expressionType)
+        public static string GetSql(this ExpressionType expressionType, bool checkingNulls = false)
         {
             string sql;
             switch (expressionType)
@@ -17,7 +18,7 @@ namespace ExpressiveDapper.Extensions
                     sql = " or ";
                     break;
                 case ExpressionType.Equal:
-                    sql = " = ";
+                    sql = checkingNulls ? " is " : " = ";
                     break;
                 case ExpressionType.GreaterThan:
                     sql = " > ";
@@ -32,7 +33,7 @@ namespace ExpressiveDapper.Extensions
                     sql = " <= ";
                     break;
                     case ExpressionType.NotEqual:
-                    sql = " != ";
+                    sql = checkingNulls ? " is not " : " != ";
                     break;
                 default:
                     throw new ArgumentException($"Could not parse expression type {expressionType}");

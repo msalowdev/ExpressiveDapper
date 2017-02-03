@@ -14,6 +14,8 @@ namespace ExpressiveDapper.Expressions
 {
     public class ExpressionParser
     {
+        private const string NULL_VALUE = " NULL ";
+
         public SqlParsedExpression ParseCompareFunction<TTable>(Expression<Func<TTable, bool>> expression) where TTable : ITable
         {
             var body = expression.Body as BinaryExpression;
@@ -27,6 +29,7 @@ namespace ExpressiveDapper.Expressions
             foreach (var sqlParsedParameter in parsedParms)
             {
                 parameters.Add(sqlParsedParameter.ParameterName, sqlParsedParameter.Value);
+                
             }
 
             SqlParsedExpression parsedExpression = new SqlParsedExpression(statement, parameters);
@@ -34,13 +37,20 @@ namespace ExpressiveDapper.Expressions
             return parsedExpression;
         }
 
-        private string ParseBinaryExpression(string tableName, BinaryExpression expression, List<SqlParsedParameter> parsedParms)
+        private string ParseBinaryExpression(string tableName, BinaryExpression expression,
+            List<SqlParsedParameter> parsedParms)
         {
 
             var left = expression.Left;
             var right = expression.Right;
             var nodeType = expression.NodeType;
-            return ParseExpression(tableName, left, parsedParms) + nodeType.GetSql() + ParseExpression(tableName, right, parsedParms);
+
+            var leftValue = ParseExpression(tableName, left, parsedParms);
+            var rightValue = ParseExpression(tableName, right, parsedParms);
+
+            bool nullCheck = leftValue == NULL_VALUE || rightValue == NULL_VALUE;
+
+            return leftValue + nodeType.GetSql(nullCheck) + rightValue;
         }
 
         private string ParseExpression(string tableName, Expression expression, List<SqlParsedParameter> parsedParms)
@@ -66,13 +76,21 @@ namespace ExpressiveDapper.Expressions
                 }
                 else
                 {
-                    var value = GetValueFromMemberExpresion(memberExpression);
-                    parsedExpression = "@parm" + parsedParms.Count;
-                    parsedParms.Add(new SqlParsedParameter
+                    var value = GetValueFromExpresion(memberExpression);
+
+                    if (value == null)
+                        parsedExpression = NULL_VALUE;
+                    else
                     {
-                        ParameterName = parsedExpression,
-                        Value = value
-                    });
+                        parsedExpression = "@parm" + parsedParms.Count;
+                        parsedParms.Add(new SqlParsedParameter
+                        {
+                            ParameterName = parsedExpression,
+                            Value = value
+                        });
+                    }
+
+                   
                 }
             }
             else if (expression is BinaryExpression)
@@ -80,9 +98,28 @@ namespace ExpressiveDapper.Expressions
                 var binaryExpression = (BinaryExpression) expression;
                 parsedExpression = ParseBinaryExpression(tableName, binaryExpression, parsedParms);
             }
+            else if (expression is UnaryExpression)
+            {
+                var value = GetValueFromExpresion(expression);
+                if (value == null)
+                {
+                    parsedExpression = NULL_VALUE;
+                }
+                else
+                {
+                    parsedExpression = "@parm" + parsedParms.Count;
+                    parsedParms.Add(new SqlParsedParameter
+                    {
+                        ParameterName = parsedExpression,
+                        Value = value
+                    });
+                }
+                
+            }
             else
             {
-                throw new ArgumentException($"Unknown expression type: {expression.NodeType}. Could not be converted to a binary expression");
+                throw new ArgumentException(
+                    $"Unknown expression type: {expression.GetType()}, Node Type {expression.NodeType}. Could not be converted to a binary expression");
             }
             return parsedExpression;
         }
@@ -92,14 +129,15 @@ namespace ExpressiveDapper.Expressions
         {
             return $"{tableName}.[{memberExpression.Member.Name}]";
         }
-        private object GetValueFromMemberExpresion(MemberExpression memberExpression)
+        private object GetValueFromExpresion(Expression expression)
         {
-            var function = Expression.Lambda(memberExpression).Compile();
+            var function = Expression.Lambda(expression).Compile();
             var value = function.DynamicInvoke();
 
             return value;
         }
 
+        
         private object GetValueFromConstantExpression(ConstantExpression constantExpression)
         {
             return constantExpression.Value;

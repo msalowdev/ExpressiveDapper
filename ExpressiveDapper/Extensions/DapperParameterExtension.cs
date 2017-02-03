@@ -16,6 +16,7 @@ namespace ExpressiveDapper.Extensions
             foreach (var parameter in parameters)
             {
                 dynamicParameters.Add(parameter.Key, parameter.Value);
+                
             }
             return dynamicParameters;
         }

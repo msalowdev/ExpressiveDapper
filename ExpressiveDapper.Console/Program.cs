@@ -14,39 +14,45 @@ namespace ExpressiveDapper.Console
 {
     class Program
     {
-        public class Books : ITable
+        public class TestTable :ITable
         {
             [PrimaryKey]
-            public int BookId { get; set; }
-            public string BookName { get; set; }
-            public DateTime PublishDate { get; set; }
-            public int Count { get; set; }
-        }
-
-        public class Library: ITable
-        {
-            public int Id { get; set; }
-            public int PeopleWorkingHere { get; set; }
-            public int BookId { get; set; }
-            public string LibraryName { get; set; }
+            public Guid Id { get; set; }
+            public string Name { get; set; }
+            public Guid? NullableKey { get; set; }
         }
 
         static void Main(string[] args)
         {
 
-            var newBook = new Books()
+            var firstTable = new TestTable
             {
-                BookId = 15,
-                BookName = "Updated Book again",
-                Count = 12,
-                PublishDate = DateTime.Now
+                Id = Guid.NewGuid(),
+                Name = "FirstTable",
+                NullableKey = Guid.Empty
             };
 
+            var secondTable = new TestTable
+            {
+                Id = Guid.NewGuid(),
+                Name = "Second Table",
+                NullableKey = null
+            };
+
+            Guid? guidToTest = null;
+
+            using (var connection = BuildConnection())
+            {
+                //connection.Insert(firstTable);
+                //connection.Insert(secondTable);
+                var table =
+                connection.Get<TestTable>(i => i.NullableKey == guidToTest);
+            }
         }
 
         private static SqlConnection BuildConnection()
         {
-            return new SqlConnection("Data Source=<Server>;Initial Catalog=<DB>;");
+            return new SqlConnection("Data Source<ServeName>;Initial Catalog=<DBName>;");
         }
     }
 }
