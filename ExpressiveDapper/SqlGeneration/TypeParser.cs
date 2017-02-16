@@ -42,16 +42,21 @@ namespace ExpressiveDapper.SqlGeneration
 
             return formattedProperties;
         }
-        public static FormattedUpdateProperties BuildSqlForUpdate(ITable table)
+        public static FormattedUpdateProperties BuildSqlForUpdate(ITable table, List<string> fieldsToIgnore = null )
         {
+
 
             FormattedUpdateProperties formattedProperties = new FormattedUpdateProperties();
 
             var type = table.GetType();
             //Can't save primarky keys.
-            List<PropertyInfo> tableProperties = type.GetSqlPropertyInfo().Where(i => i.GetCustomAttribute<PrimaryKeyAttribute>() == null).ToList();
-            
-            Dictionary<string, object> parameters = new Dictionary<string, object>();
+
+            List<PropertyInfo> tableProperties;
+
+            tableProperties = fieldsToIgnore == null ? 
+                type.GetSqlPropertyInfo().Where(i => i.GetCustomAttribute<PrimaryKeyAttribute>() == null).ToList() : 
+                type.GetSqlPropertyInfo().Where(i => i.GetCustomAttribute<PrimaryKeyAttribute>() == null && fieldsToIgnore.All(p => i.Name != p)).ToList();
+            Dictionary <string, object> parameters = new Dictionary<string, object>();
             List<Tuple<string, string>> fieldParameterMap = new List<Tuple<string, string>>();
 
             foreach (var tableProperty in tableProperties)

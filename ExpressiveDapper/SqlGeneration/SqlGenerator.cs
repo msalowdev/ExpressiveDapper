@@ -59,6 +59,31 @@ namespace ExpressiveDapper.SqlGeneration
             return sqlStatement;
         }
 
+        public static SqlStatement GenerateUpdateStatement<TTable>(TTable tableObject,
+          Expression<Func<TTable, bool>> where, Func<TTable, dynamic> fieldsToIgnore ) where TTable : ITable
+        {
+            var tableType = typeof(TTable);
+
+            var ignoreObject = fieldsToIgnore.Invoke(tableObject);
+
+            Type ignoreType = ignoreObject.GetType();
+
+
+
+            var ignoreList = ignoreType.GetPropertyNames();
+            ExpressionParser parser = new ExpressionParser();
+
+            SqlStatement sqlStatement = new SqlStatement();
+
+            var updateInfo = TypeParser.BuildSqlForUpdate(tableObject, ignoreList);
+
+            var parsedWhereExpression = parser.ParseCompareFunction(where);
+
+            sqlStatement.Statement = $"update {tableType.GetName()} set {updateInfo.UpdateStatement} {(string.IsNullOrEmpty(parsedWhereExpression.SqlStatement) ? string.Empty : "where " + parsedWhereExpression.SqlStatement)}";
+            sqlStatement.Parameters = updateInfo.Parameters.ToDynamicParameters(parsedWhereExpression.Parameters);
+            return sqlStatement;
+        }
+
         public static SqlStatement GenerateUpdateStatement<TTable>(dynamic objectToUpdate,
             Expression<Func<TTable, bool>> where) where TTable: ITable
         {

@@ -47,6 +47,14 @@ namespace ExpressiveDapper.Extensions
             con.Execute(statement.Statement, statement.Parameters);
         }
 
+        public static void Update<TTable>(this IDbConnection con, TTable objectToUpdate,
+        Expression<Func<TTable, bool>> where, Func<TTable, dynamic> fieldsToIgnore) where TTable : ITable
+        {
+            SqlStatement statement = SqlGenerator.GenerateUpdateStatement<TTable>(objectToUpdate, where, fieldsToIgnore);
+
+            con.Execute(statement.Statement, statement.Parameters);
+        }
+
         public static void Update<TTable>(this IDbConnection con, dynamic objectToUpdate, Expression<Func<TTable, bool>> where, IDbTransaction transaction) where TTable : ITable
         {
             SqlStatement statement = SqlGenerator.GenerateUpdateStatement<TTable>(objectToUpdate, where);
