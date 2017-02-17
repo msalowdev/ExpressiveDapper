@@ -57,6 +57,10 @@ namespace ExpressiveDapper.Expressions
         {
             string parsedExpression = string.Empty;
 
+            //Need to handle conversion. In the situations I have seen
+            //we need to convert them to member functions if they are parameters
+            //and we need to get the values then convert if they are values to be passed as parameters
+          
             if (expression is ConstantExpression)
             {
                 var value = GetValueFromConstantExpression((ConstantExpression) expression);
@@ -108,20 +112,36 @@ namespace ExpressiveDapper.Expressions
             }
             else if (expression is UnaryExpression)
             {
-                var value = GetValueFromExpresion(expression);
-                if (value == null)
+                var unaryExpression = (UnaryExpression) expression;
+                if (expression.NodeType == ExpressionType.Convert)
                 {
-                    parsedExpression = NULL_VALUE;
+                    if (unaryExpression.Operand.NodeType == ExpressionType.Parameter)
+                    {
+                        //ignore the convert and create the parameter
+                    }
+                    else
+                    {
+                        //What now? Maybe get the value and then try to convert it?
+                    }
                 }
                 else
                 {
-                    parsedExpression = "@parm" + parsedParms.Count;
-                    parsedParms.Add(new SqlParsedParameter
+                    var value = GetValueFromExpresion(expression);
+                    if (value == null)
                     {
-                        ParameterName = parsedExpression,
-                        Value = value
-                    });
+                        parsedExpression = NULL_VALUE;
+                    }
+                    else
+                    {
+                        parsedExpression = "@parm" + parsedParms.Count;
+                        parsedParms.Add(new SqlParsedParameter
+                        {
+                            ParameterName = parsedExpression,
+                            Value = value
+                        });
+                    }
                 }
+              
                 
             }
             else
@@ -139,9 +159,17 @@ namespace ExpressiveDapper.Expressions
         }
         private object GetValueFromExpresion(Expression expression)
         {
+            object value;
             var function = Expression.Lambda(expression).Compile();
-            var value = function.DynamicInvoke();
-
+            value = function.DynamicInvoke();
+            //if (expression.NodeType == ExpressionType.MemberAccess)
+            //{
+               
+            //}
+            //else
+            //{
+            //    throw new ArgumentException("Cannot handle non member types at this time");
+            //}
             return value;
         }
 
