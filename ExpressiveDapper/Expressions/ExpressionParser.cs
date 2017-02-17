@@ -60,12 +60,20 @@ namespace ExpressiveDapper.Expressions
             if (expression is ConstantExpression)
             {
                 var value = GetValueFromConstantExpression((ConstantExpression) expression);
-                parsedExpression = "@parm" + parsedParms.Count;
-                parsedParms.Add(new SqlParsedParameter
+                if (value == null)
                 {
-                    ParameterName = parsedExpression,
-                    Value = value
-                });
+                    parsedExpression = NULL_VALUE;
+                }
+                else
+                {
+                    parsedExpression = "@parm" + parsedParms.Count;
+                    parsedParms.Add(new SqlParsedParameter
+                    {
+                        ParameterName = parsedExpression,
+                        Value = value
+                    });
+                }
+               
             }
             else if (expression is MemberExpression)
             {

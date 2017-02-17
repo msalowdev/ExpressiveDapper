@@ -28,22 +28,16 @@ namespace ExpressiveDapper.Console
                 AnotherField = "Not Updated"
             };
 
-
-         
-
-
             using (var connection = BuildConnection())
             {
-                //connection.Insert(firstTable);
-                //connection.Insert(secondTable);
-                connection.Update<TestTable>(firstTable, where => where.Id == firstTable.Id, ignor => new {ignor.Name, ignor.AnotherField});
+               
 
             }
         }
 
         private static SqlConnection BuildConnection()
         {
-            return new SqlConnection("Data Source<ServeName>;Initial Catalog=<DBName>;");
+            return new SqlConnection("");
         }
 
     }
