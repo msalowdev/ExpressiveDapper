@@ -115,14 +115,34 @@ namespace ExpressiveDapper.Expressions
                 var unaryExpression = (UnaryExpression) expression;
                 if (expression.NodeType == ExpressionType.Convert)
                 {
-                    if (unaryExpression.Operand.NodeType == ExpressionType.Parameter)
+                    var memberExpression = unaryExpression.Operand as MemberExpression;
+
+                    if (memberExpression?.Expression?.NodeType == ExpressionType.Parameter)
                     {
-                        //ignore the convert and create the parameter
+                        parsedExpression = ParseParameterExpression(tableName, memberExpression);
+                    }
+                    else if(memberExpression != null)
+                    {
+                        var value = GetValueFromExpresion(memberExpression);
+
+                        if (value == null)
+                            parsedExpression = NULL_VALUE;
+                        else
+                        {
+                            parsedExpression = "@parm" + parsedParms.Count;
+                            parsedParms.Add(new SqlParsedParameter
+                            {
+                                ParameterName = parsedExpression,
+                                Value = value
+                            });
+                        }
                     }
                     else
                     {
-                        //What now? Maybe get the value and then try to convert it?
+                        //never seen this
+                        throw new Exception("This type of convert is not currently supported");
                     }
+
                 }
                 else
                 {
@@ -162,14 +182,6 @@ namespace ExpressiveDapper.Expressions
             object value;
             var function = Expression.Lambda(expression).Compile();
             value = function.DynamicInvoke();
-            //if (expression.NodeType == ExpressionType.MemberAccess)
-            //{
-               
-            //}
-            //else
-            //{
-            //    throw new ArgumentException("Cannot handle non member types at this time");
-            //}
             return value;
         }
 
