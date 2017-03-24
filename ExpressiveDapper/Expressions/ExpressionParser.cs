@@ -1,14 +1,9 @@
 ﻿using System;
-using System.CodeDom;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
-using Dapper;
 using ExpressiveDapper.Extensions;
 using ExpressiveDapper.Interfaces;
-using ExpressiveDapper.SqlGeneration;
 
 namespace ExpressiveDapper.Expressions
 {
@@ -18,11 +13,35 @@ namespace ExpressiveDapper.Expressions
 
         public SqlParsedExpression ParseCompareFunction<TTable>(Expression<Func<TTable, bool>> expression) where TTable : ITable
         {
-            var body = expression.Body as BinaryExpression;
-            var tableName = typeof(TTable).GetName();
-           
+          
             List<SqlParsedParameter> parsedParms = new List<SqlParsedParameter>();
-            var statement = ParseBinaryExpression(tableName, body, parsedParms);
+            var tableName = typeof(TTable).GetName();
+            var statement = string.Empty;
+            //Note: so if only contains, then the body is not a binary expression.
+            var binaryExpression = expression.Body as BinaryExpression;
+            var methodExpression = expression.Body as MethodCallExpression;
+            if (binaryExpression != null)
+            {
+                statement = ParseBinaryExpression(tableName, binaryExpression, parsedParms);
+            }
+            else if(methodExpression != null && methodExpression.Method.Name == "Contains")
+            {
+               
+                var memberExpression =
+                    ((MemberExpression) methodExpression.Object);
+                var getCaller = Expression.Lambda<Func<object>>(memberExpression).Compile();
+                //todo: now we have our list all we need to do is iterate over it and build the parameters.
+                var list = (IEnumerable) getCaller();
+            }
+            else
+            {
+                if (methodExpression != null)
+                {
+                    throw new NotSupportedException($"Only the Contains method is currently supported for Expression Type {expression.Body.GetType().Name}");
+                }
+                throw new NotSupportedException($"Expression Type {expression.Body.GetType().Name} not supported");
+            }
+
 
             Dictionary<string, object> parameters = new Dictionary<string, object>();
 
@@ -172,6 +191,10 @@ namespace ExpressiveDapper.Expressions
             return parsedExpression;
         }
 
+        //private string ParseContainsMethodExpression(MethodCallExpression expression)
+        //{
+
+        //}
 
         private string ParseParameterExpression(string tableName, MemberExpression memberExpression)
         {

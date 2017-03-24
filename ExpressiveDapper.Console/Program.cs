@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Threading;
+using Dapper;
 using ExpressiveDapper.Extensions;
 using ExpressiveDapper.Interfaces;
 using ExpressiveDapper.TableAttribute;
@@ -62,30 +65,25 @@ namespace ExpressiveDapper.Console
                 AnotherField = "Not Updated"
             };
 
+            var guidList = new List<Guid>() {Guid.NewGuid(), Guid.NewGuid()};
+
             Guid? termId = new Guid("95f36616-d927-4036-ba62-02dc3c643e9e");
             Guid notNullGuild = new Guid("95f36616-d927-4036-ba62-02dc3c643e9e");
             using (var connection = BuildConnection())
             {
-                var notNullTest = connection.Get<BillingTransaction>(i => i.PolicyTermId == notNullGuild);
 
-                var testPayment = connection.Get<Payment>(i => (decimal)i.PaidBy == 2);
-                var billingTrans = connection.Get<BillingTransaction>(i => i.PolicyTermId == termId);
-                //billingTrans.ForEach(trans =>
-                //{
-                //    if (trans.PaymentId != null)
-                //    {
-                //        var payment = connection.Get<Payment>(i => i.Id == trans.PaymentId).SingleOrDefault();
+                //var result = connection.Query<TestTable>("select * from TestTable where Id in @Value",
+                //    new {Value = guidList});
 
-                //        System.Console.WriteLine(payment);
-                //    }
-                //});
+                //var result = connection.Get<TestTable>(i => i.Id == Guid.NewGuid());
+                var result = connection.Get<TestTable>(i => guidList.Contains(i.Id));
 
             }
         }
 
         private static SqlConnection BuildConnection()
         {
-            return new SqlConnection("Data Source=SWISQL300;Initial Catalog=SWBillTest;Integrated Security=True");
+            return null; 
         }
 
     }
