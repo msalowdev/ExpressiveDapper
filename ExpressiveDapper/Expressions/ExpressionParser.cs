@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using ExpressiveDapper.Extensions;
 using ExpressiveDapper.Interfaces;
@@ -32,6 +33,24 @@ namespace ExpressiveDapper.Expressions
                 var getCaller = Expression.Lambda<Func<object>>(memberExpression).Compile();
                 //todo: now we have our list all we need to do is iterate over it and build the parameters.
                 var list = (IEnumerable) getCaller();
+
+                string inParmList = string.Empty;
+
+                foreach (var item in list)
+                {
+                    parsedParms.Add(new SqlParsedParameter
+                    {
+                        ParameterName = "@parm" + parsedParms.Count,
+                        Value = item
+                    });
+                }
+
+
+
+                inParmList = string.Join(",", parsedParms.Select(i => i.ParameterName));
+
+                statement = $"{ParseParameterExpression(tableName, methodExpression.Arguments[0] as MemberExpression)} in ({inParmList})"; 
+                
             }
             else
             {
@@ -98,10 +117,26 @@ namespace ExpressiveDapper.Expressions
                 }
                
             }
+            else if (expression is MethodCallExpression)
+            {
+                var value = GetValueFromExpresion(expression);
+
+                if (value == null)
+                    parsedExpression = NULL_VALUE;
+                else
+                {
+                    parsedExpression = "@parm" + parsedParms.Count;
+                    parsedParms.Add(new SqlParsedParameter
+                    {
+                        ParameterName = parsedExpression,
+                        Value = value
+                    });
+                }
+            }
             else if (expression is MemberExpression)
             {
                 var memberExpression = (MemberExpression) expression;
-                if ( memberExpression.Expression?.NodeType == ExpressionType.Parameter)
+                if (memberExpression.Expression?.NodeType == ExpressionType.Parameter)
                 {
                     parsedExpression = ParseParameterExpression(tableName, memberExpression);
                 }
@@ -121,7 +156,7 @@ namespace ExpressiveDapper.Expressions
                         });
                     }
 
-                   
+
                 }
             }
             else if (expression is BinaryExpression)
@@ -140,7 +175,7 @@ namespace ExpressiveDapper.Expressions
                     {
                         parsedExpression = ParseParameterExpression(tableName, memberExpression);
                     }
-                    else if(memberExpression != null)
+                    else if (memberExpression != null)
                     {
                         var value = GetValueFromExpresion(memberExpression);
 
@@ -158,7 +193,7 @@ namespace ExpressiveDapper.Expressions
                     }
                     else
                     {
-                        //never seen this
+                        
                         throw new Exception("This type of convert is not currently supported");
                     }
 
@@ -180,8 +215,8 @@ namespace ExpressiveDapper.Expressions
                         });
                     }
                 }
-              
-                
+
+
             }
             else
             {
@@ -190,11 +225,6 @@ namespace ExpressiveDapper.Expressions
             }
             return parsedExpression;
         }
-
-        //private string ParseContainsMethodExpression(MethodCallExpression expression)
-        //{
-
-        //}
 
         private string ParseParameterExpression(string tableName, MemberExpression memberExpression)
         {
