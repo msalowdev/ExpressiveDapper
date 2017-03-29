@@ -14,62 +14,34 @@ namespace ExpressiveDapper.Expressions
 
         public SqlParsedExpression ParseCompareFunction<TTable>(Expression<Func<TTable, bool>> expression) where TTable : ITable
         {
-          
+
             List<SqlParsedParameter> parsedParms = new List<SqlParsedParameter>();
             var tableName = typeof(TTable).GetName();
             var statement = string.Empty;
-            //Note: so if only contains, then the body is not a binary expression.
-            var binaryExpression = expression.Body as BinaryExpression;
-            var methodExpression = expression.Body as MethodCallExpression;
-            if (binaryExpression != null)
+
+            //special check for an expression that only has a single method call to contains on a list.
+            if (expression.Body.IsContainsCall())
             {
-                statement = ParseBinaryExpression(tableName, binaryExpression, parsedParms);
+                statement = ParseListContainsToInStatement(tableName, expression.Body as MethodCallExpression, parsedParms);
             }
-            else if(methodExpression != null && methodExpression.Method.Name == "Contains")
+            else if (expression.Body is BinaryExpression)
             {
-               
-                var memberExpression =
-                    ((MemberExpression) methodExpression.Object);
-                var getCaller = Expression.Lambda<Func<object>>(memberExpression).Compile();
-                //todo: now we have our list all we need to do is iterate over it and build the parameters.
-                var list = (IEnumerable) getCaller();
+                var binaryExpression = (BinaryExpression)expression.Body;
 
-                string inParmList = string.Empty;
-
-                foreach (var item in list)
-                {
-                    parsedParms.Add(new SqlParsedParameter
-                    {
-                        ParameterName = "@parm" + parsedParms.Count,
-                        Value = item
-                    });
-                }
-
-
-
-                inParmList = string.Join(",", parsedParms.Select(i => i.ParameterName));
-
-                statement = $"{ParseParameterExpression(tableName, methodExpression.Arguments[0] as MemberExpression)} in ({inParmList})"; 
-                
+                statement = ParseBinaryExpression(tableName, binaryExpression, parsedParms);
             }
             else
             {
-                if (methodExpression != null)
-                {
-                    throw new NotSupportedException($"Only the Contains method is currently supported for Expression Type {expression.Body.GetType().Name}");
-                }
                 throw new NotSupportedException($"Expression Type {expression.Body.GetType().Name} not supported");
             }
-
 
             Dictionary<string, object> parameters = new Dictionary<string, object>();
 
             foreach (var sqlParsedParameter in parsedParms)
             {
                 parameters.Add(sqlParsedParameter.ParameterName, sqlParsedParameter.Value);
-                
-            }
 
+            }
             SqlParsedExpression parsedExpression = new SqlParsedExpression(statement, parameters);
 
             return parsedExpression;
@@ -98,8 +70,12 @@ namespace ExpressiveDapper.Expressions
             //Need to handle conversion. In the situations I have seen
             //we need to convert them to member functions if they are parameters
             //and we need to get the values then convert if they are values to be passed as parameters
-          
-            if (expression is ConstantExpression)
+            if (expression.IsContainsCall())
+            {
+                parsedExpression = ParseListContainsToInStatement(tableName, expression as MethodCallExpression,
+                    parsedParms);
+            }
+            else if (expression is ConstantExpression)
             {
                 var value = GetValueFromConstantExpression((ConstantExpression) expression);
                 if (value == null)
@@ -115,7 +91,7 @@ namespace ExpressiveDapper.Expressions
                         Value = value
                     });
                 }
-               
+
             }
             else if (expression is MethodCallExpression)
             {
@@ -193,7 +169,7 @@ namespace ExpressiveDapper.Expressions
                     }
                     else
                     {
-                        
+
                         throw new Exception("This type of convert is not currently supported");
                     }
 
@@ -226,6 +202,42 @@ namespace ExpressiveDapper.Expressions
             return parsedExpression;
         }
 
+        private string ParseListContainsToInStatement(string tableName, MethodCallExpression methodCallExpression,
+            List<SqlParsedParameter> parsedParms)
+        {
+            string statement = string.Empty;
+            if (methodCallExpression != null && methodCallExpression.Method.Name == "Contains")
+            {
+
+                var memberExpression = (MemberExpression)methodCallExpression.Object;
+                var getCaller = Expression.Lambda<Func<object>>(memberExpression).Compile();
+                var list = (IEnumerable)getCaller();
+
+                string inParmList = string.Empty;
+
+                foreach (var item in list)
+                {
+                    parsedParms.Add(new SqlParsedParameter
+                    {
+                        ParameterName = "@parm" + parsedParms.Count,
+                        Value = item
+                    });
+                }
+                inParmList = string.Join(",", parsedParms.Select(i => i.ParameterName));
+
+                var parameter = ParseParameterExpression(tableName,
+                    methodCallExpression.Arguments[0] as MemberExpression);
+                statement = $"{parameter} in ({inParmList})";
+
+            }
+            else
+            {
+                throw new Exception($"Method {methodCallExpression?.Method.Name ?? "No expression found"} is not supported");
+            }
+
+            return statement;
+        }
+
         private string ParseParameterExpression(string tableName, MemberExpression memberExpression)
         {
             return $"{tableName}.[{memberExpression.Member.Name}]";
@@ -238,7 +250,7 @@ namespace ExpressiveDapper.Expressions
             return value;
         }
 
-        
+
         private object GetValueFromConstantExpression(ConstantExpression constantExpression)
         {
             return constantExpression.Value;

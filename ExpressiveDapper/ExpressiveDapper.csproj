@@ -52,6 +52,7 @@
     <Compile Include="Expressions\SqlParsedParameter.cs" />
     <Compile Include="Expressions\SqlParsedExpression.cs" />
     <Compile Include="Extensions\DapperParameterExtension.cs" />
+    <Compile Include="Extensions\ExpressionExtension.cs" />
     <Compile Include="Extensions\FormatExtension.cs" />
     <Compile Include="Extensions\FormattedUpdateProperties.cs" />
     <Compile Include="Extensions\IDbConnectionExtension.cs" />
