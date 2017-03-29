@@ -21,5 +21,14 @@ namespace ExpressiveDapper.Extensions
             }
             return isContainsCall;
         }
+
+        public static bool IsParameterAccess(this MemberExpression expression)
+        {
+
+            return (expression.Expression?.NodeType == ExpressionType.Parameter) ||
+                   (expression.Expression is UnaryExpression &&
+                    ((UnaryExpression) expression.Expression).Operand.NodeType == ExpressionType.Parameter);
+
+        }
     }
 }
