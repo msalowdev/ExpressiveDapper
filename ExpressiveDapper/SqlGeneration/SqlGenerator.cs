@@ -9,33 +9,37 @@ namespace ExpressiveDapper.SqlGeneration
 {
     public static class SqlGenerator
     {
-        public static SqlStatement GenerateSelectStatement<TTable>(Expression<Func<TTable, bool>> where) where TTable: ITable
+        public static SqlStatement GenerateSelectStatement<TTable>(Expression<Func<TTable, bool>> where) where TTable : ITable
         {
 
-            var tableType = typeof (TTable);
+            var tableType = typeof(TTable);
             ExpressionParser parser = new ExpressionParser();
 
             SqlStatement sqlStatement = new SqlStatement();
 
-            var selectParms = TypeParser.BuildSqlForSelect( tableType);
+            var selectParms = TypeParser.BuildSqlForSelect(tableType);
             SqlParsedExpression parsedWhereExpression = null;
             if (where != null)
             {
                 parsedWhereExpression = parser.ParseCompareFunction(where);
             }
-           
+
 
             sqlStatement.Statement = $"select {selectParms} from {tableType.GetName()} {(string.IsNullOrEmpty(parsedWhereExpression?.SqlStatement) ? string.Empty : " where " + parsedWhereExpression.SqlStatement)}";
             sqlStatement.Parameters = parsedWhereExpression?.Parameters.ToDynamicParameters();
             return sqlStatement;
         }
 
-        public static SqlStatement GenerateInsertStatement<TTable>(TTable tableObj) where TTable : ITable
+        public static SqlStatement GenerateInsertStatement<TTable>(TTable tableObj, bool getIdentity = false) where TTable : ITable
         {
-            var tableType = typeof (TTable);
+            var tableType = typeof(TTable);
             SqlStatement sqlStatement = new SqlStatement();
             var insertInfo = TypeParser.BuildSqlForInsert(tableObj);
+
             sqlStatement.Statement = $"insert into {tableType.GetName()} ({insertInfo.InsertStatement}) values ({insertInfo.ParameterStatement})";
+            if (getIdentity)
+                sqlStatement.Statement += " select cast (scope_identity() as int)";
+
             sqlStatement.Parameters = insertInfo.Parameters.ToDynamicParameters();
             return sqlStatement;
         }
@@ -52,15 +56,15 @@ namespace ExpressiveDapper.SqlGeneration
 
             var parsedWhereExpression = parser.ParseCompareFunction(where);
 
-            
 
-            sqlStatement.Statement = $"update {tableType.GetName()} set {updateInfo.UpdateStatement} {(string.IsNullOrEmpty(parsedWhereExpression.SqlStatement) ? string.Empty: "where " + parsedWhereExpression.SqlStatement)}";
-            sqlStatement.Parameters = updateInfo.Parameters.ToDynamicParameters(parsedWhereExpression.Parameters); 
+
+            sqlStatement.Statement = $"update {tableType.GetName()} set {updateInfo.UpdateStatement} {(string.IsNullOrEmpty(parsedWhereExpression.SqlStatement) ? string.Empty : "where " + parsedWhereExpression.SqlStatement)}";
+            sqlStatement.Parameters = updateInfo.Parameters.ToDynamicParameters(parsedWhereExpression.Parameters);
             return sqlStatement;
         }
 
         public static SqlStatement GenerateUpdateStatement<TTable>(TTable tableObject,
-          Expression<Func<TTable, bool>> where, Func<TTable, dynamic> fieldsToIgnore ) where TTable : ITable
+          Expression<Func<TTable, bool>> where, Func<TTable, dynamic> fieldsToIgnore) where TTable : ITable
         {
             var tableType = typeof(TTable);
 
@@ -85,7 +89,7 @@ namespace ExpressiveDapper.SqlGeneration
         }
 
         public static SqlStatement GenerateUpdateStatement<TTable>(dynamic objectToUpdate,
-            Expression<Func<TTable, bool>> where) where TTable: ITable
+            Expression<Func<TTable, bool>> where) where TTable : ITable
         {
             var tableType = typeof(TTable);
             ExpressionParser parser = new ExpressionParser();
