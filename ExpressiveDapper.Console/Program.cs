@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Net.Http.Headers;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Dapper;
 using ExpressiveDapper.Extensions;
@@ -13,7 +15,12 @@ namespace ExpressiveDapper.Console
 {
     class Program
     {
-        public class BillingTransaction : ITable
+
+        public interface IHasId: ITable
+        {
+             Guid Id { get; set; }
+        }
+        public class BillingTransaction : ITable, IHasId
         {
             [PrimaryKey]
             public Guid Id { get; set; }
@@ -45,7 +52,7 @@ namespace ExpressiveDapper.Console
             public DateTime DateCreated { get; set; }
             public DateTime DateModified { get; set; }
         }
-        public class TestTable :ITable
+        public class TestTable :ITable, IHasId
         {
             [PrimaryKey]
             public Guid Id { get; set; }
@@ -65,25 +72,50 @@ namespace ExpressiveDapper.Console
                 AnotherField = "Not Updated"
             };
 
-            var guidList = new List<Guid>() {Guid.NewGuid(), Guid.NewGuid()};
+            var guidList = new List<Guid>() {new Guid("f1fb286d-21fb-49f8-a66a-c3a3acb20e52"), new Guid("6f6d1376-035f-4cff-885f-86431fc59509") };
 
-            Guid? termId = new Guid("95f36616-d927-4036-ba62-02dc3c643e9e");
-            Guid notNullGuild = new Guid("95f36616-d927-4036-ba62-02dc3c643e9e");
+            Guid? nullableGuid = null;//new Guid("f1fb286d-21fb-49f8-a66a-c3a3acb20e52");
+
+            var nonNullGuid = new Guid("6f6d1376-035f-4cff-885f-86431fc59509");
+
             using (var connection = BuildConnection())
             {
 
-                //var result = connection.Query<TestTable>("select * from TestTable where Id in @Value",
-                //    new {Value = guidList});
+                var result = connection.Get<TestTable>(i => guidList.Contains(i.Id) && i.AnotherField == "Hello");
 
-                //var result = connection.Get<TestTable>(i => i.Id == Guid.NewGuid());
-                var result = connection.Get<TestTable>(i => guidList.Contains(i.Id));
+                //var result = connection.Query<TestTable>("select * from TestTable where Id in @Value",
+                //    new { Value = guidList });
+
+                //var result = connection.Get<TestTable>(i => i.NullableKey == nullableGuid);
+                //var innerResult = connection.Get<TestTable>(i => i.Id == Guid.NewGuid()).SingleOrDefault();
 
             }
+
+            //var result = GetValue<TestTable>();
+        }
+        //todo: solve this with expressive dapper if possible. Taking a generic and identifying the parameter
+        private static TValue GetValue<TValue>() where TValue: IHasId
+        {
+            var value = default(TValue);
+            var tableName = $"[{typeof (TValue).Name}]";
+            using (var con = BuildConnection())
+            {
+                var guidToTest = new Guid("f1fb286d-21fb-49f8-a66a-c3a3acb20e52");
+
+                value = con.Get<TValue>(i => i.Id == guidToTest).SingleOrDefault();
+
+                //value =
+                //    con.Query<TValue>(
+                //        $"select * from {tableName} where {tableName}.{nameof(IHasId.Id)} = @Id",
+                //        new {Id =new Guid("f1fb286d-21fb-49f8-a66a-c3a3acb20e52") }).SingleOrDefault();
+            }
+
+            return value;
         }
 
         private static SqlConnection BuildConnection()
         {
-            return null; 
+            return new SqlConnection("Data Source=192.168.1.25,2137;Initial Catalog=dappertest;User Id=dbtestuser; Password=dbtest");
         }
 
     }

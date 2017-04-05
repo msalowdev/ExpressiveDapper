@@ -8,5 +8,6 @@ namespace ExpressiveDapper.Interfaces
 {
     public interface ITable
     {
+
     }
 }
